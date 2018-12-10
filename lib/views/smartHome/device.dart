@@ -82,7 +82,7 @@ class DeviceCardViewState extends State<DeviceCardView> {
         print(result["data"]["rooms"][0]["devices"][0]["app_pic_url"]);
         if(!mounted) return;
         setState(() {
-          _devices = result["data"]["rooms"][0]["devices"];
+          _devices = result["data"]["rooms"][0]["devices"] as List<dynamic>;
         });
       }
     } catch (e) {}

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'dart:convert';
 import 'dart:io';
+
+import './googleiofilteroptionanimation.dart';
 
 import './editRoom.dart';
 
@@ -188,6 +189,7 @@ class RoomListState extends State<RoomList> {
                   )
                 ],
               ),
+              onTap: () =>_goEditRoom(room['room_id'], room['room_name']),
             ),
     );
   }
@@ -198,7 +200,9 @@ class RoomListState extends State<RoomList> {
 void _goEditRoom(String roomName, int roomId){
   Navigator.of(context).push(MaterialPageRoute(
     builder: (context){
-        return new EditRoom(roomName, roomId);
+        return new
+        // FilterAnimationGoogleIOTutorial();
+        EditRoom(roomName, roomId);
       }
   ));
 }

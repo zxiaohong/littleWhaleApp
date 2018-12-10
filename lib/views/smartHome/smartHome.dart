@@ -122,8 +122,5 @@ class SmartHomeState extends State<SmartHome>
             );
           }),
     );
-
-
-
   }
 }

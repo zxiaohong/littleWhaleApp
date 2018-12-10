@@ -5,6 +5,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'dart:io';
 import 'dart:convert';
 
+import './roomName.dart';
+import './animationtest.dart';
+
 class EditRoom extends StatelessWidget {
   final String roomName;
   final int roomId;
@@ -47,10 +50,13 @@ class RoomsInfo extends StatefulWidget {
   RoomsInfoState createState() => RoomsInfoState(roomName, roomId);
 }
 
-class RoomsInfoState extends State<RoomsInfo> {
+class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
   final GlobalKey<AnimatedListState> _listKey =
       new GlobalKey<AnimatedListState>();
 
+  AnimationController _controller;
+  Animation<double> _enlargeAnimation;
+  Animation<double> _shrinkAnimation;
   final String roomName;
   final int roomId;
   RoomsInfoState(this.roomName, this.roomId);
@@ -67,13 +73,19 @@ class RoomsInfoState extends State<RoomsInfo> {
   @override
   void initState() {
     super.initState();
+    _controller =
+        AnimationController(vsync: this, duration: Duration(seconds: 3));
+    _enlargeAnimation = new Tween(begin: 0.8, end: 1.0).animate(_controller);
+    _shrinkAnimation = new Tween(begin: 0.8, end: 1.0).animate(_controller);
+    print(_enlargeAnimation);
     _getDevices();
+    _controller.forward(from: 1.0);
   }
 
-  // dispose() {
-  //   controller.dispose();
-  //   super.dispose();
-  // }
+  dispose() {
+    super.dispose();
+    _controller.dispose();
+  }
 
   _getDevices() async {
     var httpClient = new HttpClient();
@@ -125,8 +137,6 @@ class RoomsInfoState extends State<RoomsInfo> {
 
   @override
   Widget build(BuildContext context) {
-    //因为本路由没有使用Scaffold，为了让子级Widget(如Text)使用
-    //Material Design 默认的样式风格,我们使用Material作为本路由的根。
     return CustomScrollView(
       slivers: <Widget>[
         // 家庭名称
@@ -149,7 +159,7 @@ class RoomsInfoState extends State<RoomsInfo> {
                       Icon(Icons.keyboard_arrow_right, color: Color(0xffDEDFE8))
                     ],
                   ),
-                  onTap: null,
+                  onTap: () => _editRoomName(roomId, roomName),
                 ));
           }, childCount: 1),
         ),
@@ -226,8 +236,16 @@ class RoomsInfoState extends State<RoomsInfo> {
                   Wrap(
                     spacing: 10.0,
                     children: room['devices']
-                        .map<Widget>((device) =>
-                            _singleDeviceCard(room['room_id'], device, signal))
+                        .map<Widget>((device) => _singleDeviceCardBuilder(
+                                room['room_id'], device, signal)
+                            // SingleDeviceCard(
+                            //   curRoomId: room['room_id'],
+                            //   device: device,
+                            //   signal: signal,
+                            //   onRemove: _removeDevice,
+                            //   onAdd: _addToCurRoom
+                            //   )
+                            )
                         .toList(),
                   ),
                 ],
@@ -248,8 +266,213 @@ class RoomsInfoState extends State<RoomsInfo> {
               ));
   }
 
+  Widget _singleDeviceCardBuilder(curRoomId, device, signal){
+    return AnimatedBuilder(
+      builder: (BuildContext context, Widget widget){
+        if(signal == 'current'){
+          return ScaleTransition(
+            scale: _enlargeAnimation,
+            child: _singleDeviceCard(curRoomId, device, signal),
+          );
+        }else{
+          return ScaleTransition(
+            scale: _shrinkAnimation,
+            child: _singleDeviceCard(curRoomId, device, signal),
+          );
+        }
+
+      },
+      animation: _controller,
+    );
+  }
+
   Widget _singleDeviceCard(curRoomId, device, signal) {
-    // print(device);
+    final GlobalKey _commonContainerKey = GlobalKey(debugLabel: 'CommonContainer');
+
+    return Container(
+        key: _commonContainerKey,
+        width: ScreenUtil().setWidth(345),
+        height: ScreenUtil().setHeight(256),
+        margin: EdgeInsets.only(bottom: 10.0),
+        child: ConstrainedBox(
+          constraints: BoxConstraints.expand(),
+          child: Stack(
+
+            alignment: AlignmentDirectional.bottomStart,
+            children: <Widget>[
+              // 产品图片
+              Container(
+                // height: ScreenUtil().setHeight(150),
+                alignment: Alignment.topCenter,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.only(
+                      topLeft: Radius.elliptical(4.0, 4.0),
+                      topRight: Radius.elliptical(4.0, 4.0)),
+                  color: Color(0xff43486F),
+                ),
+                padding: EdgeInsets.only(
+                    top: ScreenUtil().setHeight(6),
+                    bottom: ScreenUtil().setHeight(130)),
+                child: Image(
+                  image: NetworkImage(device["app_pic_url"]
+                      // "https://img10.360buyimg.com/n5/s54x54_jfs/t1/1325/27/9916/31986/5bc946c9E748626df/79850cb5c7d8a7f0.jpg"
+                      ),
+                  width: 150.0,
+                  height: 150.0,
+                ),
+              ),
+              // 产品信息
+              Container(
+                height: ScreenUtil().setHeight(100),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.elliptical(4.0, 4.0),
+                      bottomRight: Radius.elliptical(4.0, 4.0)),
+                  color: Color(0xff43486F),
+                ),
+                padding: EdgeInsets.only(bottom: ScreenUtil().setHeight(6)),
+                child: new Row(children: <Widget>[
+                  new Expanded(
+                    child: new Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: <Widget>[
+                        Container(
+                          child: Text(device["device_name"],
+                              style: TextStyle(color: Color(0xffffffff))),
+                        ),
+                        Text(device["category_name"],
+                            style: TextStyle(
+                                color: Color(0xffFFF091),
+                                fontSize: ScreenUtil().setSp(24)))
+                      ],
+                    ),
+                  )
+                ]),
+              ),
+              // 按钮
+              Positioned(
+                  top: -5.0,
+                  right: -5.0,
+                  child: Theme(
+                    data: ThemeData(splashColor: Colors.transparent),
+                    child: signal == 'current'
+                        ? IconButton(
+                            padding: EdgeInsets.all(0.0),
+                            icon: Icon(
+                              Icons.remove_circle_outline,
+                              color: Color(0xffFF6262),
+                            ),
+                            onPressed: () => _removeDevice(device),
+                          )
+                        : IconButton(
+                            padding: EdgeInsets.all(0.0),
+                            icon: Icon(
+                              Icons.add_circle,
+                              color: Color(0xff78FBFF),
+                            ),
+                            onPressed: () => _addToCurRoom(device, signal),
+                          ),
+                  ))
+            ],
+          ),
+        ),
+      );
+  }
+
+  void _removeDevice(device) {
+    curRoom[0]['devices'].remove(device);
+    if (device['room_id'] == roomId || device['room_id'] == null) {
+      defaultRooms[0]['devices'].insert(0, device);
+    } else {
+      for (var item in otherRooms) {
+        if (item['room_id'] == device['room_id']) {
+          item['devices'].insert(0, device);
+        }
+      }
+    }
+    setState(() {
+      _defaultRooms = defaultRooms;
+      _curRooms = curRoom;
+    });
+    // _shrinkAnimation = new Tween(begin: 1.0, end: 0.8).animate(_controller);
+
+    _controller.forward();
+  }
+
+  void _addToCurRoom(device, signal) {
+    print(device);
+    curRoom[0]['devices'].add(device);
+    if (signal == 'default') {
+      defaultRooms[0]['devices'].remove(device);
+    } else {
+      for (var item in otherRooms) {
+        if (item['room_id'] == device['room_id']) {
+          item['devices'].remove(device);
+        }
+      }
+    }
+    setState(() {
+      _defaultRooms = defaultRooms;
+      _curRooms = curRoom;
+    });
+   _controller.forward();
+  }
+
+  void _editRoomName(roomId, roomName) {
+    Navigator.of(context).push(new MaterialPageRoute(builder: (context) {
+      return
+          // new AnimatedListSample();
+          new RoomName(roomId, roomName);
+    }));
+  }
+}
+
+class SingleDeviceCard extends StatefulWidget {
+  final curRoomId;
+  final device;
+  final String signal;
+  final onRemove;
+  final onAdd;
+  SingleDeviceCard(
+      {Key key,
+      @required this.curRoomId,
+      @required this.device,
+      @required this.signal,
+      @required this.onRemove,
+      @required this.onAdd});
+  SingleDeviceCardState createState() => SingleDeviceCardState(
+      curRoomId: curRoomId,
+      device: device,
+      signal: signal,
+      onRemove: onRemove,
+      onAdd: onAdd);
+}
+
+class SingleDeviceCardState extends State<SingleDeviceCard>
+    with TickerProviderStateMixin {
+  final curRoomId;
+  final device;
+  final String signal;
+  final onRemove;
+  final onAdd;
+  SingleDeviceCardState(
+      {Key key,
+      @required this.curRoomId,
+      @required this.device,
+      @required this.signal,
+      @required this.onRemove,
+      @required this.onAdd});
+
+  AnimationController _controller;
+  @override
+  void initState() {
+    super.initState();
+    _controller =
+        AnimationController(vsync: this, duration: Duration(seconds: 2));
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       width: ScreenUtil().setWidth(345),
       height: ScreenUtil().setHeight(256),
@@ -318,7 +541,7 @@ class RoomsInfoState extends State<RoomsInfo> {
                             Icons.remove_circle_outline,
                             color: Color(0xffFF6262),
                           ),
-                          onPressed: () => _removeDevice(device),
+                          onPressed: () => onRemove(device),
                         )
                       : IconButton(
                           padding: EdgeInsets.all(0.0),
@@ -326,47 +549,12 @@ class RoomsInfoState extends State<RoomsInfo> {
                             Icons.add_circle,
                             color: Color(0xff78FBFF),
                           ),
-                          onPressed: () => _addToCurRoom(device, signal),
+                          onPressed: () => onAdd(device, signal),
                         ),
                 ))
           ],
         ),
       ),
     );
-  }
-
-  void _removeDevice(device) {
-    curRoom[0]['devices'].remove(device);
-    if (device['room_id'] == roomId || device['room_id'] == null) {
-      defaultRooms[0]['devices'].insert(0, device);
-    } else {
-      for (var item in otherRooms) {
-        if (item['room_id'] == device['room_id']) {
-          item['devices'].insert(0, device);
-        }
-      }
-    }
-    setState(() {
-      _defaultRooms = defaultRooms;
-      _curRooms = curRoom;
-    });
-  }
-
-  void _addToCurRoom(device, signal) {
-    print(device);
-    curRoom[0]['devices'].add(device);
-    if (signal == 'default') {
-      defaultRooms[0]['devices'].remove(device);
-    } else {
-      for (var item in otherRooms) {
-        if (item['room_id'] == device['room_id']) {
-          item['devices'].remove(device);
-        }
-      }
-    }
-    setState(() {
-      _defaultRooms = defaultRooms;
-      _curRooms = curRoom;
-    });
   }
 }
