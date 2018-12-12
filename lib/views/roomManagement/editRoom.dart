@@ -228,14 +228,10 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
   }
 
   Widget singleRoomDevides(room, signal) {
-    print("________________________________");
-    print(room['room_id']);
-    print(room['devices'].length);
     return Container(
         padding: EdgeInsets.only(left: 10.0),
         alignment: Alignment.centerLeft,
-        child: room['devices'].length > 0
-            ? Column(
+        child:  Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Padding(
@@ -262,20 +258,7 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
                   ),
                 ],
               )
-            : Container(
-                margin: EdgeInsets.only(top: 10.0, bottom: 10.0),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.only(
-                      topLeft: Radius.elliptical(4.0, 4.0),
-                      topRight: Radius.elliptical(4.0, 4.0)),
-                  color: Color(0xff43486F),
-                ),
-                width: ScreenUtil().setWidth(710),
-                height: ScreenUtil().setHeight(320),
-                child: Image(
-                  image: AssetImage('./images/kong_2.png'),
-                ),
-              ));
+          );
   }
 
   Widget _singleDeviceCardBuilder(curRoomId, device, signal){
