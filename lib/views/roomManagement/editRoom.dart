@@ -12,8 +12,10 @@ class EditRoom extends StatelessWidget {
   final String roomName;
   final int roomId;
   EditRoom(this.roomName, this.roomId);
+
   @override
   Widget build(BuildContext context) {
+    print("room_id is $roomId");
     return Scaffold(
       backgroundColor: Color(0Xff3B426B),
       appBar: AppBar(
@@ -66,9 +68,11 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
   var _rooms = [];
   var _defaultRooms = [];
   var _otherRooms = [];
+  int device_count;
   var curRoom = [];
   var otherRooms = [];
   var defaultRooms = [];
+  int deviceCount = 0;
 
   @override
   void initState() {
@@ -117,8 +121,10 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
             curRoom.add(item);
           } else if (item['room_id'] == null) {
             defaultRooms.add(item);
+            deviceCount += item["devices"].length;
           } else {
             otherRooms.add(item);
+            deviceCount += item["devices"].length;
           }
         }
         print(curRoom);
@@ -130,6 +136,7 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
           _curRooms = curRoom;
           _otherRooms = otherRooms;
           _defaultRooms = defaultRooms;
+          device_count = deviceCount;
         });
       }
     } catch (e) {}
@@ -198,6 +205,8 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
             );
           }, childCount: 1),
         ),
+
+
         // 默认房间
         SliverList(
           delegate:
@@ -219,6 +228,9 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
   }
 
   Widget singleRoomDevides(room, signal) {
+    print("________________________________");
+    print(room['room_id']);
+    print(room['devices'].length);
     return Container(
         padding: EdgeInsets.only(left: 10.0),
         alignment: Alignment.centerLeft,

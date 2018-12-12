@@ -153,6 +153,8 @@ class RoomListState extends State<RoomList> {
   // 房间列表项
   Widget _roomItem(bool _editing, Map room) {
     final _fontStyle = TextStyle(fontSize: ScreenUtil().setSp(28, false), color: Color(0xffDEDFE8));
+    print(room["room_id"]);
+
     return Container(
       padding: EdgeInsets.only(left: 5.0),
       decoration: BoxDecoration(
@@ -189,7 +191,7 @@ class RoomListState extends State<RoomList> {
                   )
                 ],
               ),
-              onTap: () =>_goEditRoom(room['room_id'], room['room_name']),
+              onTap: _editing ? null :() =>_goEditRoom(room['room_name'], room['room_id']),
             ),
     );
   }
