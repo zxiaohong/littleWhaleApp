@@ -127,13 +127,15 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return
+    Container(
       alignment: Alignment.topLeft,
       padding: EdgeInsets.all(10.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
+      child: ListView(
+        // crossAxisAlignment: CrossAxisAlignment.start,
+        // mainAxisSize: MainAxisSize.min,
+        children:
+         <Widget>[
           // 家庭名称
           Container(
               alignment: Alignment.topLeft,
@@ -227,8 +229,9 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
                   color: Color(0xff7D80A2))),
         ),
         Flexible(
-          child: SafeArea(
+          // child: SafeArea(
             child: AnimatedList(
+              shrinkWrap: true,
               key: _listKey,
               initialItemCount: room['devices'].length,
               itemBuilder:
@@ -240,7 +243,7 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
                 );
               },
             ),
-          ),
+          // ),
         )
       ],
     ));
