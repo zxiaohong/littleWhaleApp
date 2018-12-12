@@ -45,7 +45,7 @@ class DeviceCardViewState extends State<DeviceCardView> {
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         crossAxisSpacing: ScreenUtil().setWidth(30),
-        childAspectRatio: 1.1
+        childAspectRatio: 1
       ),
       itemCount: _devices.length,
       itemBuilder: _singleDeviceCardBuilder,

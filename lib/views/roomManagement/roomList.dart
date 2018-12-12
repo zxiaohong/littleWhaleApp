@@ -189,7 +189,7 @@ class RoomListState extends State<RoomList> {
                   )
                 ],
               ),
-              onTap: () =>_goEditRoom(room['room_id'], room['room_name']),
+              onTap: _editing ? null :() =>_goEditRoom(room['room_name'], room['room_id']),
             ),
     );
   }
