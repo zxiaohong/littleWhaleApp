@@ -7,6 +7,7 @@ import 'dart:convert';
 
 import './roomName.dart';
 import './animationtest.dart';
+import '../../customWidget/animated_grid.dart';
 
 class EditRoom extends StatelessWidget {
   final String roomName;
@@ -127,15 +128,13 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return
-    Container(
+    return Container(
       alignment: Alignment.topLeft,
       padding: EdgeInsets.all(10.0),
       child: ListView(
         // crossAxisAlignment: CrossAxisAlignment.start,
         // mainAxisSize: MainAxisSize.min,
-        children:
-         <Widget>[
+        children: <Widget>[
           // 家庭名称
           Container(
               alignment: Alignment.topLeft,
@@ -215,7 +214,7 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
   }
 
   Widget singleRoomDevides(room, signal) {
-    final GlobalKey<AnimatedListState> _listKey = GlobalKey();
+    final GlobalKey<AnimatedGridState> _listKey = GlobalKey();
     return Container(
         child: Column(
       mainAxisSize: MainAxisSize.min,
@@ -230,19 +229,24 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
         ),
         Flexible(
           // child: SafeArea(
-            child: AnimatedList(
-              shrinkWrap: true,
-              key: _listKey,
-              initialItemCount: room['devices'].length,
-              itemBuilder:
-                  (BuildContext context, int index, Animation animation) {
-                return ScaleTransition(
-                  scale: animation,
-                  child: _singleDeviceCard(
-                      room['room_id'], room['devices'][index], signal),
-                );
-              },
-            ),
+          child: AnimatedGrid(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: ScreenUtil().setWidth(30),
+                childAspectRatio: 1
+              ),
+            shrinkWrap: true,
+            key: _listKey,
+            initialItemCount: room['devices'].length,
+            itemBuilder:
+                (BuildContext context, int index, Animation animation) {
+              return ScaleTransition(
+                scale: animation,
+                child: _singleDeviceCard(
+                    room['room_id'], room['devices'][index], signal),
+              );
+            },
+          ),
           // ),
         )
       ],
@@ -381,7 +385,7 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
   void _editRoomName(roomId, roomName) {
     Navigator.of(context).push(new MaterialPageRoute(builder: (context) {
       return
-          // new AnimatedListSample();
+          // new AnimatedGridSample();
           new RoomName(roomId, roomName);
     }));
   }
