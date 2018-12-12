@@ -8,6 +8,8 @@ import 'dart:convert';
 import './roomName.dart';
 import './animationtest.dart';
 
+import '../../customWidget//animated_grid.dart';
+
 class EditRoom extends StatelessWidget {
   final String roomName;
   final int roomId;
@@ -53,12 +55,11 @@ class RoomsInfo extends StatefulWidget {
 }
 
 class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
-  final GlobalKey<AnimatedListState> _listKey =
-      new GlobalKey<AnimatedListState>();
+  final GlobalKey<AnimatedGridState> _listKey =
+      new GlobalKey<AnimatedGridState>();
 
   AnimationController _controller;
-  Animation<double> _enlargeAnimation;
-  Animation<double> _shrinkAnimation;
+
   final String roomName;
   final int roomId;
   RoomsInfoState(this.roomName, this.roomId);
@@ -77,18 +78,7 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _controller =
-        AnimationController(vsync: this, duration: Duration(seconds: 3));
-    _enlargeAnimation = new Tween(begin: 0.8, end: 1.0).animate(_controller);
-    _shrinkAnimation = new Tween(begin: 0.8, end: 1.0).animate(_controller);
-    print(_enlargeAnimation);
     _getDevices();
-    _controller.forward(from: 1.0);
-  }
-
-  dispose() {
-    super.dispose();
-    _controller.dispose();
   }
 
   _getDevices() async {
@@ -229,9 +219,10 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
 
   Widget singleRoomDevides(room, signal) {
     return Container(
-        padding: EdgeInsets.only(left: 10.0),
+        padding: EdgeInsets.all( 10.0),
         alignment: Alignment.centerLeft,
         child:  Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Padding(
@@ -241,44 +232,30 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
                             fontSize: ScreenUtil().setSp(26, false),
                             color: Color(0xff7D80A2))),
                   ),
-                  Wrap(
-                    spacing: 10.0,
-                    children: room['devices']
-                        .map<Widget>((device) => _singleDeviceCardBuilder(
-                                room['room_id'], device, signal)
-                            // SingleDeviceCard(
-                            //   curRoomId: room['room_id'],
-                            //   device: device,
-                            //   signal: signal,
-                            //   onRemove: _removeDevice,
-                            //   onAdd: _addToCurRoom
-                            //   )
-                            )
-                        .toList(),
-                  ),
+                  Flexible(
+                    child: SafeArea(
+                      child: AnimatedGrid(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: ScreenUtil().setWidth(30),
+                          childAspectRatio: 1.2
+                        ),
+                        physics: ScrollPhysics(parent: const BouncingScrollPhysics()),
+                        shrinkWrap: true,
+                        initialItemCount: room['devices'].length,
+                        itemBuilder: (BuildContext context, int index, Animation animation){
+                          return ScaleTransition(
+                            scale: animation,
+                            child: _singleDeviceCard(room['room_id'], room['devices'][index], signal),
+                          );
+                        },
+                      ),
+
+                    ),
+                  )
                 ],
               )
           );
-  }
-
-  Widget _singleDeviceCardBuilder(curRoomId, device, signal){
-    return AnimatedBuilder(
-      builder: (BuildContext context, Widget widget){
-        if(signal == 'current'){
-          return ScaleTransition(
-            scale: _enlargeAnimation,
-            child: _singleDeviceCard(curRoomId, device, signal),
-          );
-        }else{
-          return ScaleTransition(
-            scale: _shrinkAnimation,
-            child: _singleDeviceCard(curRoomId, device, signal),
-          );
-        }
-
-      },
-      animation: _controller,
-    );
   }
 
   Widget _singleDeviceCard(curRoomId, device, signal) {
@@ -289,10 +266,11 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
         width: ScreenUtil().setWidth(345),
         height: ScreenUtil().setHeight(256),
         margin: EdgeInsets.only(bottom: 10.0),
-        child: ConstrainedBox(
-          constraints: BoxConstraints.expand(),
-          child: Stack(
-
+        child:
+        // ConstrainedBox(
+        //   constraints: BoxConstraints.expand(),
+        //   child:
+          Stack(
             alignment: AlignmentDirectional.bottomStart,
             children: <Widget>[
               // 产品图片
@@ -370,7 +348,6 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
                   ))
             ],
           ),
-        ),
       );
   }
 
@@ -389,9 +366,6 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
       _defaultRooms = defaultRooms;
       _curRooms = curRoom;
     });
-    // _shrinkAnimation = new Tween(begin: 1.0, end: 0.8).animate(_controller);
-
-    _controller.forward();
   }
 
   void _addToCurRoom(device, signal) {
@@ -410,13 +384,12 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
       _defaultRooms = defaultRooms;
       _curRooms = curRoom;
     });
-   _controller.forward();
   }
 
   void _editRoomName(roomId, roomName) {
     Navigator.of(context).push(new MaterialPageRoute(builder: (context) {
       return
-          // new AnimatedListSample();
+          // new AnimatedGridSample();
           new RoomName(roomId, roomName);
     }));
   }
