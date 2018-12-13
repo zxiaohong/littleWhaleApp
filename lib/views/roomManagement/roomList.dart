@@ -27,21 +27,27 @@ class RoomListState extends State<RoomList> {
     _getList(houseId);
   }
 
-  final _fontStyle = TextStyle(fontSize: ScreenUtil().setSp(28, false), color: Color(0xffDEDFE8));
+  final _fontStyle = TextStyle(
+      fontSize: ScreenUtil().setSp(28, false), color: Color(0xffDEDFE8));
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0Xff3B426B),
       appBar: AppBar(
-        title: Text("房间管理", style: TextStyle(fontSize: ScreenUtil().setSp(36, false)),),
+        title: Text(
+          "房间管理",
+          style: TextStyle(fontSize: ScreenUtil().setSp(36, false)),
+        ),
         actions: <Widget>[
           GestureDetector(
             child: Container(
               padding: EdgeInsets.only(right: 10.0),
               alignment: Alignment.center,
               child: Text("添加房间",
-                  style: TextStyle(color: Color(0xff78FBFF), fontSize: ScreenUtil().setSp(28, false))),
+                  style: TextStyle(
+                      color: Color(0xff78FBFF),
+                      fontSize: ScreenUtil().setSp(28, false))),
             ),
             onTap: () => _goEditRoom("未填写", 2),
           )
@@ -57,12 +63,14 @@ class RoomListState extends State<RoomList> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
                   Text("有${_rooms.length}个房间",
-                      style:
-                          TextStyle(fontSize: ScreenUtil().setSp(24, false), color: Color(0xff7D80A2))),
+                      style: TextStyle(
+                          fontSize: ScreenUtil().setSp(24, false),
+                          color: Color(0xff7D80A2))),
                   GestureDetector(
                     child: Text(_editing ? "完成" : "编辑",
                         style: TextStyle(
-                            fontSize: ScreenUtil().setSp(24, false), color: Color(0xff78FBFF))),
+                            fontSize: ScreenUtil().setSp(24, false),
+                            color: Color(0xff78FBFF))),
                     onTap: _changeEditStatus,
                   )
                 ],
@@ -93,7 +101,11 @@ class RoomListState extends State<RoomList> {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      Text(_defaultRoom["device_cnt"] == 0 ? "暂无设备":"有${_defaultRoom["device_cnt"]}个设备", style: _fontStyle),
+                      Text(
+                          _defaultRoom["device_cnt"] == 0
+                              ? "暂无设备"
+                              : "有${_defaultRoom["device_cnt"]}个设备",
+                          style: _fontStyle),
                       Icon(
                         Icons.keyboard_arrow_right,
                         color: Color(0xffADB0C6),
@@ -129,8 +141,8 @@ class RoomListState extends State<RoomList> {
       print(result["data"]["rooms"]);
       var rooms = result["data"]["rooms"];
       var defaultRoom = {};
-      for(var item in rooms){
-        if(item["room_id"] == null){
+      for (var item in rooms) {
+        if (item["room_id"] == null) {
           defaultRoom = item;
         }
       }
@@ -152,7 +164,8 @@ class RoomListState extends State<RoomList> {
 
   // 房间列表项
   Widget _roomItem(bool _editing, Map room) {
-    final _fontStyle = TextStyle(fontSize: ScreenUtil().setSp(28, false), color: Color(0xffDEDFE8));
+    final _fontStyle = TextStyle(
+        fontSize: ScreenUtil().setSp(28, false), color: Color(0xffDEDFE8));
     print(room["room_id"]);
 
     return Container(
@@ -181,82 +194,85 @@ class RoomListState extends State<RoomList> {
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  _editing ? Text(""):
-                  room['device_cnt'] == 0
-                      ? Text("暂无设备", style: TextStyle(color: Color(0xffADB0C6)))
-                      : Text("有${room['device_cnt']}个设备", style: _fontStyle),
+                  _editing
+                      ? Text("")
+                      : room['device_cnt'] == 0
+                          ? Text("暂无设备",
+                              style: TextStyle(color: Color(0xffADB0C6)))
+                          : Text("有${room['device_cnt']}个设备",
+                              style: _fontStyle),
                   Icon(
                     Icons.keyboard_arrow_right,
                     color: Color(0xffADB0C6),
                   )
                 ],
               ),
-              onTap: _editing ? null :() =>_goEditRoom(room['room_name'], room['room_id']),
+              onTap: _editing
+                  ? null
+                  : () => _goEditRoom(room['room_name'], room['room_id']),
             ),
     );
   }
 
-
-
 // 进入编辑房间页面
-void _goEditRoom(String roomName, int roomId){
-  Navigator.of(context).push(MaterialPageRoute(
-    builder: (context){
-        return new
-        // FilterAnimationGoogleIOTutorial();
-        EditRoom(roomName, roomId);
-      }
-  ));
-}
+  void _goEditRoom(String roomName, int roomId) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+      return new
+          // FilterAnimationGoogleIOTutorial();
+          EditRoom(roomName, roomId);
+    }));
+  }
+
 //  使用 ListView ListView 必须放在一个 Flex 类里 如 Expanded, Flexible 等
   Widget _otherRoomList(_editing, _rooms) {
     final _fontStyle = TextStyle(fontSize: 14.0, color: Color(0xffDEDFE8));
     return Container(
-        constraints: BoxConstraints(maxHeight: 470.0),
         margin: EdgeInsets.only(top: 20.0),
         decoration: BoxDecoration(
             color: Color(0xff5C628D), borderRadius: BorderRadius.circular(4.0)),
-        child: Column(children: <Widget>[
+        child: Column(mainAxisSize: MainAxisSize.min, children: <Widget>[
           Flexible(
-            // fit: FlexFit.tight,
-            child: Container(
-                child: ListView.separated(
-                    itemCount: _rooms.length,
-                    itemBuilder: (context, index) {
-                      return ListTile(
-                        dense: true,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 10.0),
-                        leading: _editing
-                            ? IconButton(
-                                icon: Icon(
-                                  Icons.remove_circle_outline,
-                                  color: Color(0xffFF6262),
-                                  size: 18.0,
-                                ),
-                                onPressed: null,
+            child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: _rooms.length,
+                itemBuilder: (context, index) {
+                  return _rooms[index]['room_id'] != null
+                      ? ListTile(
+                          dense: true,
+                          contentPadding:
+                              EdgeInsets.symmetric(horizontal: 10.0),
+                          leading: _editing
+                              ? IconButton(
+                                  icon: Icon(
+                                    Icons.remove_circle_outline,
+                                    color: Color(0xffFF6262),
+                                    size: 18.0,
+                                  ),
+                                  onPressed: null,
+                                )
+                              : null,
+                          title: Text(_rooms[index]["room_name"],
+                              style: _fontStyle),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              Text("有${_rooms[index]["device_cnt"]}个设备",
+                                  style: _fontStyle),
+                              Icon(
+                                Icons.keyboard_arrow_right,
+                                color: Color(0xffDEDFE8),
                               )
-                            : null,
-                        title:
-                            Text(_rooms[index]["room_name"], style: _fontStyle),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: <Widget>[
-                            Text("有${_rooms[index]["device_cnt"]}个设备",
-                                style: _fontStyle),
-                            Icon(
-                              Icons.keyboard_arrow_right,
-                              color: Color(0xffDEDFE8),
-                            )
-                          ],
-                        ),
-                      );
-                    },
-                    separatorBuilder: (context, index) {
-                      return Divider(
-                        height: 1.0,
-                        color: Color(0Xff3B426B),
-                      );
-                    })),
+                            ],
+                          ),
+                        )
+                      : null;
+                },
+                separatorBuilder: (context, index) {
+                  return Divider(
+                    height: 1.0,
+                    color: Color(0Xff3B426B),
+                  );
+                }),
           )
         ]));
   }

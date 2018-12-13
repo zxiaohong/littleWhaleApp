@@ -55,11 +55,6 @@ class RoomsInfo extends StatefulWidget {
 }
 
 class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
-  final GlobalKey<AnimatedGridState> _listKey =
-      new GlobalKey<AnimatedGridState>();
-
-  AnimationController _controller;
-
   final String roomName;
   final int roomId;
   RoomsInfoState(this.roomName, this.roomId);
@@ -135,13 +130,11 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return CustomScrollView(
+      shrinkWrap: true,
       slivers: <Widget>[
         // 家庭名称
-        SliverList(
-          delegate:
-              SliverChildBuilderDelegate((BuildContext context, int index) {
-            //创建列表项
-            return new Container(
+        SliverToBoxAdapter(
+            child: Container(
                 margin: EdgeInsets.all(10.0),
                 decoration: BoxDecoration(
                     color: Color(0xff5C628D),
@@ -157,46 +150,31 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
                     ],
                   ),
                   onTap: () => _editRoomName(roomId, roomName),
-                ));
-          }, childCount: 1),
-        ),
+                ))),
         // 当前房间的设备 文本描述
-        SliverList(
-          delegate:
-              SliverChildBuilderDelegate((BuildContext context, int index) {
-            //创建列表项
-            return new Padding(
-              padding: EdgeInsets.only(left: 10.0),
-              child: Text("当前房间的设备",
-                  style: TextStyle(
-                      fontSize: ScreenUtil().setSp(26, false),
-                      color: Color(0xff7D80A2))),
-            );
-          }, childCount: 1),
+        SliverToBoxAdapter(
+          child: new Padding(
+            padding: EdgeInsets.only(left: 10.0),
+            child: Text("当前房间的设备",
+                style: TextStyle(
+                    fontSize: ScreenUtil().setSp(26, false),
+                    color: Color(0xff7D80A2))),
+          ),
         ),
         SliverList(
-          delegate:
-              SliverChildBuilderDelegate((BuildContext context, int index) {
-            return Container(
-                child: singleRoomDevides(_curRooms[index], 'current'));
-          }, childCount: _curRooms.length),
-        ),
+            delegate: SliverChildListDelegate(_curRooms
+                .map((room) => singleRoomDevides(room, 'current'))
+                .toList())),
         // 其他房间的设备
-        SliverList(
-          delegate:
-              SliverChildBuilderDelegate((BuildContext context, int index) {
-            //创建列表项
-            return new Padding(
-              padding: EdgeInsets.only(left: 10.0),
-              child: Text("其他房间的设备",
-                  style: TextStyle(
-                      fontSize: ScreenUtil().setSp(26, false),
-                      color: Color(0xff7D80A2))),
-            );
-          }, childCount: 1),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.only(left: 10.0),
+            child: Text("其他房间的设备",
+                style: TextStyle(
+                    fontSize: ScreenUtil().setSp(26, false),
+                    color: Color(0xff7D80A2))),
+          ),
         ),
-
-
         // 默认房间
         SliverList(
           delegate:
@@ -217,138 +195,132 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
     );
   }
 
-  Widget singleRoomDevides(room, signal) {
-    return Container(
-        padding: EdgeInsets.all( 10.0),
-        alignment: Alignment.centerLeft,
-        child:  Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Padding(
-                    padding: EdgeInsets.only(top: 10.0, bottom: 10.0),
-                    child: Text(room['room_name'],
-                        style: TextStyle(
-                            fontSize: ScreenUtil().setSp(26, false),
-                            color: Color(0xff7D80A2))),
-                  ),
-                  Flexible(
-                    child: SafeArea(
-                      child: AnimatedGrid(
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: ScreenUtil().setWidth(30),
-                          childAspectRatio: 1.2
-                        ),
-                        physics: ScrollPhysics(parent: const BouncingScrollPhysics()),
-                        shrinkWrap: true,
-                        initialItemCount: room['devices'].length,
-                        itemBuilder: (BuildContext context, int index, Animation animation){
-                          return ScaleTransition(
-                            scale: animation,
-                            child: _singleDeviceCard(room['room_id'], room['devices'][index], signal),
-                          );
-                        },
-                      ),
+  GlobalKey<AnimatedGridState> _listKey;
 
-                    ),
-                  )
-                ],
-              )
-          );
+  Widget singleRoomDevides(room, signal) {
+    _listKey = new GlobalKey<AnimatedGridState>();
+    return Container(
+        padding: EdgeInsets.only(left: 10.0, right: 10.0),
+        alignment: Alignment.centerLeft,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Padding(
+              padding: EdgeInsets.only(top: 10.0, bottom: 10.0),
+              child: Text(room['room_name'],
+                  style: TextStyle(
+                      fontSize: ScreenUtil().setSp(26, false),
+                      color: Color(0xff7D80A2))),
+            ),
+            SafeArea(
+              child: AnimatedGrid(
+                key: _listKey,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: ScreenUtil().setWidth(30),
+                    childAspectRatio: 1.2),
+                physics: ScrollPhysics(parent: const BouncingScrollPhysics()),
+                shrinkWrap: true,
+                initialItemCount: room['devices'].length,
+                itemBuilder:
+                    (BuildContext context, int index, Animation animation) {
+                  return ScaleTransition(
+                    scale: animation,
+                    child: _singleDeviceCard(
+                        room['room_id'], room['devices'][index], signal),
+                  );
+                },
+              ),
+            )
+          ],
+        ));
   }
 
   Widget _singleDeviceCard(curRoomId, device, signal) {
-    final GlobalKey _commonContainerKey = GlobalKey(debugLabel: 'CommonContainer');
-
     return Container(
-        key: _commonContainerKey,
-        width: ScreenUtil().setWidth(345),
-        height: ScreenUtil().setHeight(256),
-        margin: EdgeInsets.only(bottom: 10.0),
-        child:
-        // ConstrainedBox(
-        //   constraints: BoxConstraints.expand(),
-        //   child:
-          Stack(
-            alignment: AlignmentDirectional.bottomStart,
-            children: <Widget>[
-              // 产品图片
-              Container(
-                // height: ScreenUtil().setHeight(150),
-                alignment: Alignment.topCenter,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.only(
-                      topLeft: Radius.elliptical(4.0, 4.0),
-                      topRight: Radius.elliptical(4.0, 4.0)),
-                  color: Color(0xff43486F),
-                ),
-                padding: EdgeInsets.only(
-                    top: ScreenUtil().setHeight(6),
-                    bottom: ScreenUtil().setHeight(130)),
-                child: Image(
-                  image: NetworkImage(device["app_pic_url"]
-                      // "https://img10.360buyimg.com/n5/s54x54_jfs/t1/1325/27/9916/31986/5bc946c9E748626df/79850cb5c7d8a7f0.jpg"
-                      ),
-                  width: 150.0,
-                  height: 150.0,
-                ),
-              ),
-              // 产品信息
-              Container(
-                height: ScreenUtil().setHeight(100),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.elliptical(4.0, 4.0),
-                      bottomRight: Radius.elliptical(4.0, 4.0)),
-                  color: Color(0xff43486F),
-                ),
-                padding: EdgeInsets.only(bottom: ScreenUtil().setHeight(6)),
-                child: new Row(children: <Widget>[
-                  new Expanded(
-                    child: new Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: <Widget>[
-                        Container(
-                          child: Text(device["device_name"],
-                              style: TextStyle(color: Color(0xffffffff))),
-                        ),
-                        Text(device["category_name"],
-                            style: TextStyle(
-                                color: Color(0xffFFF091),
-                                fontSize: ScreenUtil().setSp(24)))
-                      ],
-                    ),
-                  )
-                ]),
-              ),
-              // 按钮
-              Positioned(
-                  top: -5.0,
-                  right: -5.0,
-                  child: Theme(
-                    data: ThemeData(splashColor: Colors.transparent),
-                    child: signal == 'current'
-                        ? IconButton(
-                            padding: EdgeInsets.all(0.0),
-                            icon: Icon(
-                              Icons.remove_circle_outline,
-                              color: Color(0xffFF6262),
-                            ),
-                            onPressed: () => _removeDevice(device),
-                          )
-                        : IconButton(
-                            padding: EdgeInsets.all(0.0),
-                            icon: Icon(
-                              Icons.add_circle,
-                              color: Color(0xff78FBFF),
-                            ),
-                            onPressed: () => _addToCurRoom(device, signal),
-                          ),
-                  ))
-            ],
+      width: ScreenUtil().setWidth(345),
+      height: ScreenUtil().setHeight(256),
+      margin: EdgeInsets.only(bottom: 10.0),
+      child: Stack(
+        alignment: AlignmentDirectional.bottomStart,
+        children: <Widget>[
+          // 产品图片
+          Container(
+            // height: ScreenUtil().setHeight(150),
+            alignment: Alignment.topCenter,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.only(
+                  topLeft: Radius.elliptical(4.0, 4.0),
+                  topRight: Radius.elliptical(4.0, 4.0)),
+              color: Color(0xff43486F),
+            ),
+            padding: EdgeInsets.only(
+                top: ScreenUtil().setHeight(6),
+                bottom: ScreenUtil().setHeight(130)),
+            child: Image(
+              image: NetworkImage(device["app_pic_url"]
+                  // "https://img10.360buyimg.com/n5/s54x54_jfs/t1/1325/27/9916/31986/5bc946c9E748626df/79850cb5c7d8a7f0.jpg"
+                  ),
+              width: 150.0,
+              height: 150.0,
+            ),
           ),
-      );
+          // 产品信息
+          Container(
+            height: ScreenUtil().setHeight(100),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.elliptical(4.0, 4.0),
+                  bottomRight: Radius.elliptical(4.0, 4.0)),
+              color: Color(0xff43486F),
+            ),
+            padding: EdgeInsets.only(bottom: ScreenUtil().setHeight(6)),
+            child: new Row(children: <Widget>[
+              new Expanded(
+                child: new Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: <Widget>[
+                    Container(
+                      child: Text(device["device_name"],
+                          style: TextStyle(color: Color(0xffffffff))),
+                    ),
+                    Text(device["category_name"],
+                        style: TextStyle(
+                            color: Color(0xffFFF091),
+                            fontSize: ScreenUtil().setSp(24)))
+                  ],
+                ),
+              )
+            ]),
+          ),
+          // 按钮
+          Positioned(
+              top: -5.0,
+              right: -5.0,
+              child: Theme(
+                data: ThemeData(splashColor: Colors.transparent),
+                child: signal == 'current'
+                    ? IconButton(
+                        padding: EdgeInsets.all(0.0),
+                        icon: Icon(
+                          Icons.remove_circle_outline,
+                          color: Color(0xffFF6262),
+                        ),
+                        onPressed: () => _removeDevice(device),
+                      )
+                    : IconButton(
+                        padding: EdgeInsets.all(0.0),
+                        icon: Icon(
+                          Icons.add_circle,
+                          color: Color(0xff78FBFF),
+                        ),
+                        onPressed: () => _addToCurRoom(device, signal),
+                      ),
+              ))
+        ],
+      ),
+    );
   }
 
   void _removeDevice(device) {
@@ -369,8 +341,8 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
   }
 
   void _addToCurRoom(device, signal) {
-    print(device);
     curRoom[0]['devices'].add(device);
+
     if (signal == 'default') {
       defaultRooms[0]['devices'].remove(device);
     } else {
@@ -395,134 +367,221 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
   }
 }
 
-class SingleDeviceCard extends StatefulWidget {
-  final curRoomId;
-  final device;
+class SingleRoomDevides extends StatefulWidget {
+  final room;
   final String signal;
-  final onRemove;
-  final onAdd;
-  SingleDeviceCard(
+  final List curRoom;
+  final List defaultRooms;
+  final List otherRooms;
+  final int roomId;
+  SingleRoomDevides(
       {Key key,
-      @required this.curRoomId,
-      @required this.device,
+      @required this.room,
       @required this.signal,
-      @required this.onRemove,
-      @required this.onAdd});
-  SingleDeviceCardState createState() => SingleDeviceCardState(
-      curRoomId: curRoomId,
-      device: device,
+      @required this.curRoom,
+      @required this.defaultRooms,
+      @required this.roomId,
+      @required this.otherRooms});
+
+  SingleRoomDevidesState createState() => SingleRoomDevidesState(
+      room: room,
       signal: signal,
-      onRemove: onRemove,
-      onAdd: onAdd);
+      curRoom: curRoom,
+      otherRooms: otherRooms,
+      defaultRooms: defaultRooms,
+      roomId: roomId);
 }
 
-class SingleDeviceCardState extends State<SingleDeviceCard>
-    with TickerProviderStateMixin {
-  final curRoomId;
-  final device;
+class SingleRoomDevidesState extends State<SingleRoomDevides> {
+  final room;
   final String signal;
-  final onRemove;
-  final onAdd;
-  SingleDeviceCardState(
+  final List curRoom;
+  final List defaultRooms;
+  final List otherRooms;
+  final int roomId;
+  SingleRoomDevidesState(
       {Key key,
-      @required this.curRoomId,
-      @required this.device,
+      @required this.room,
       @required this.signal,
-      @required this.onRemove,
-      @required this.onAdd});
+      @required this.curRoom,
+      @required this.defaultRooms,
+      @required this.roomId,
+      @required this.otherRooms});
 
-  AnimationController _controller;
+  List _defaultRooms;
+  List _curRooms;
+
   @override
   void initState() {
     super.initState();
-    _controller =
-        AnimationController(vsync: this, duration: Duration(seconds: 2));
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
+        padding: EdgeInsets.only(left: 10.0, right: 10.0),
+        alignment: Alignment.centerLeft,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Padding(
+              padding: EdgeInsets.only(top: 10.0, bottom: 10.0),
+              child: Text(room['room_name'],
+                  style: TextStyle(
+                      fontSize: ScreenUtil().setSp(26, false),
+                      color: Color(0xff7D80A2))),
+            ),
+            SafeArea(
+              child: AnimatedGrid(
+                // key: _listKey,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: ScreenUtil().setWidth(30),
+                    childAspectRatio: 1.2),
+                physics: ScrollPhysics(parent: const BouncingScrollPhysics()),
+                shrinkWrap: true,
+                initialItemCount: room['devices'].length,
+                itemBuilder:
+                    (BuildContext context, int index, Animation animation) {
+                  return ScaleTransition(
+                    scale: animation,
+                    child: _singleDeviceCard(
+                        room['room_id'], room['devices'][index], signal),
+                  );
+                },
+              ),
+            )
+          ],
+        ));
+  }
+
+  Widget _singleDeviceCard(curRoomId, device, signal) {
+    return Container(
       width: ScreenUtil().setWidth(345),
       height: ScreenUtil().setHeight(256),
       margin: EdgeInsets.only(bottom: 10.0),
-      child: ConstrainedBox(
-        constraints: BoxConstraints.expand(),
-        child: Stack(
-          alignment: AlignmentDirectional.bottomStart,
-          children: <Widget>[
-            Container(
-              // height: ScreenUtil().setHeight(150),
-              alignment: Alignment.topCenter,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.only(
-                    topLeft: Radius.elliptical(4.0, 4.0),
-                    topRight: Radius.elliptical(4.0, 4.0)),
-                color: Color(0xff43486F),
-              ),
-              padding: EdgeInsets.only(
-                  top: ScreenUtil().setHeight(6),
-                  bottom: ScreenUtil().setHeight(130)),
-              child: Image(
-                image: NetworkImage(device["app_pic_url"]
-                    // "https://img10.360buyimg.com/n5/s54x54_jfs/t1/1325/27/9916/31986/5bc946c9E748626df/79850cb5c7d8a7f0.jpg"
-                    ),
-                width: 150.0,
-                height: 150.0,
-              ),
+      child: Stack(
+        alignment: AlignmentDirectional.bottomStart,
+        children: <Widget>[
+          // 产品图片
+          Container(
+            // height: ScreenUtil().setHeight(150),
+            alignment: Alignment.topCenter,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.only(
+                  topLeft: Radius.elliptical(4.0, 4.0),
+                  topRight: Radius.elliptical(4.0, 4.0)),
+              color: Color(0xff43486F),
             ),
-            Container(
-              height: ScreenUtil().setHeight(100),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.elliptical(4.0, 4.0),
-                    bottomRight: Radius.elliptical(4.0, 4.0)),
-                color: Color(0xff43486F),
-              ),
-              padding: EdgeInsets.only(bottom: ScreenUtil().setHeight(6)),
-              child: new Row(children: <Widget>[
-                new Expanded(
-                  child: new Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: <Widget>[
-                      Container(
-                        child: Text(device["device_name"],
-                            style: TextStyle(color: Color(0xffffffff))),
-                      ),
-                      Text(device["category_name"],
-                          style: TextStyle(
-                              color: Color(0xffFFF091),
-                              fontSize: ScreenUtil().setSp(24)))
-                    ],
+            padding: EdgeInsets.only(
+                top: ScreenUtil().setHeight(6),
+                bottom: ScreenUtil().setHeight(130)),
+            child: Image(
+              image: NetworkImage(device["app_pic_url"]
+                  // "https://img10.360buyimg.com/n5/s54x54_jfs/t1/1325/27/9916/31986/5bc946c9E748626df/79850cb5c7d8a7f0.jpg"
                   ),
-                )
-              ]),
+              width: 150.0,
+              height: 150.0,
             ),
-            Positioned(
-                top: -5.0,
-                right: -5.0,
-                child: Theme(
-                  data: ThemeData(splashColor: Colors.transparent),
-                  child: signal == 'current'
-                      ? IconButton(
-                          padding: EdgeInsets.all(0.0),
-                          icon: Icon(
-                            Icons.remove_circle_outline,
-                            color: Color(0xffFF6262),
-                          ),
-                          onPressed: () => onRemove(device),
-                        )
-                      : IconButton(
-                          padding: EdgeInsets.all(0.0),
-                          icon: Icon(
-                            Icons.add_circle,
-                            color: Color(0xff78FBFF),
-                          ),
-                          onPressed: () => onAdd(device, signal),
+          ),
+          // 产品信息
+          Container(
+            height: ScreenUtil().setHeight(100),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.elliptical(4.0, 4.0),
+                  bottomRight: Radius.elliptical(4.0, 4.0)),
+              color: Color(0xff43486F),
+            ),
+            padding: EdgeInsets.only(bottom: ScreenUtil().setHeight(6)),
+            child: new Row(children: <Widget>[
+              new Expanded(
+                child: new Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: <Widget>[
+                    Container(
+                      child: Text(device["device_name"],
+                          style: TextStyle(color: Color(0xffffffff))),
+                    ),
+                    Text(device["category_name"],
+                        style: TextStyle(
+                            color: Color(0xffFFF091),
+                            fontSize: ScreenUtil().setSp(24)))
+                  ],
+                ),
+              )
+            ]),
+          ),
+          // 按钮
+          Positioned(
+              top: -5.0,
+              right: -5.0,
+              child: Theme(
+                data: ThemeData(splashColor: Colors.transparent),
+                child: signal == 'current'
+                    ? IconButton(
+                        padding: EdgeInsets.all(0.0),
+                        icon: Icon(
+                          Icons.remove_circle_outline,
+                          color: Color(0xffFF6262),
                         ),
-                ))
-          ],
-        ),
+                        onPressed: () => _removeDevice(device),
+                      )
+                    : IconButton(
+                        padding: EdgeInsets.all(0.0),
+                        icon: Icon(
+                          Icons.add_circle,
+                          color: Color(0xff78FBFF),
+                        ),
+                        onPressed: () => _addToCurRoom(device, signal),
+                      ),
+              ))
+        ],
       ),
     );
+  }
+
+  void _removeDevice(device) {
+    curRoom[0]['devices'].remove(device);
+    if (device['room_id'] == roomId || device['room_id'] == null) {
+      defaultRooms[0]['devices'].insert(0, device);
+    } else {
+      for (var item in otherRooms) {
+        if (item['room_id'] == device['room_id']) {
+          item['devices'].insert(0, device);
+        }
+      }
+    }
+    setState(() {
+      _defaultRooms = defaultRooms;
+      _curRooms = curRoom;
+    });
+  }
+
+  void _addToCurRoom(device, signal) {
+    curRoom[0]['devices'].add(device);
+
+    if (signal == 'default') {
+      defaultRooms[0]['devices'].remove(device);
+    } else {
+      for (var item in otherRooms) {
+        if (item['room_id'] == device['room_id']) {
+          item['devices'].remove(device);
+        }
+      }
+    }
+    setState(() {
+      _defaultRooms = defaultRooms;
+      _curRooms = curRoom;
+    });
+  }
+
+  void _editRoomName(roomId, roomName) {
+    Navigator.of(context).push(new MaterialPageRoute(builder: (context) {
+      return
+          // new AnimatedGridSample();
+          new RoomName(roomId, roomName);
+    }));
   }
 }
