@@ -174,7 +174,7 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
         // 当前房间的设备 文本描述
         SliverToBoxAdapter(
             child: new Padding(
-          padding: EdgeInsets.only(top: 10.0,left: 10.0),
+          padding: EdgeInsets.only(top: 10.0, left: 10.0),
           child: Text("当前房间的设备",
               style: TextStyle(
                   fontSize: ScreenUtil().setSp(26, false),
@@ -197,14 +197,22 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
                   color: Color(0xff7D80A2))),
         )),
         _deviceCount > 0
-            ?
-            // 其他房间
-            SliverList(
-                delegate: SliverChildBuilderDelegate(
-                    (BuildContext context, int index) {
-                  return Container(
-                      child: singleRoomDevides(_allOtherRooms[index], 'other'));
-                }, childCount: _allOtherRooms.length),
+            ? SliverToBoxAdapter(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: _defaultRooms
+                            .map((room) => singleRoomDevides(room, 'default'))
+                            .toList()),
+                    Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: _otherRooms
+                            .map((room) => singleRoomDevides(room, 'other'))
+                            .toList())
+                  ],
+                ),
               )
             : SliverToBoxAdapter(
                 child: Container(
@@ -229,9 +237,8 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
   Widget singleRoomDevides(room, signal) {
     print("________________________________");
     print(room['room_id']);
-    print(room['devices'].length);
-    return Container(
-        padding: EdgeInsets.only(left: 10.0),
+    return room['devices'] != null && room['devices'].length> 0 ? Container(
+        padding: EdgeInsets.only(left: 10.0, right: 10.0),
         alignment: Alignment.centerLeft,
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -250,26 +257,17 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
                 crossAxisCount: 2,
                 crossAxisSpacing: 10.0,
                 mainAxisSpacing: 5.0,
-                childAspectRatio: 1.1,
-                children:
-                  room['devices']
-                  .map<Widget>((device) =>
-                          _singleDeviceCard(room['room_id'], device, signal)
-                      // SingleDeviceCard(
-                      //   curRoomId: room['room_id'],
-                      //   device: device,
-                      //   signal: signal,
-                      //   onRemove: _removeDevice,
-                      //   onAdd: _addToCurRoom
-                      //   )
-                      )
-                  .toList(),
+                childAspectRatio: 1.38,
+                children: room['devices']
+                    .map<Widget>((device) =>
+                        _singleDeviceCard(room['room_id'], device, signal))
+                    .toList(),
               ),
             ),
 
             // Wrap(
             //   spacing: 10.0,
-            //   children: room['devices']
+            //   children: room['devices']!= null && room['devices'].length> 0 ?room['devices']
             //       .map<Widget>((device) =>
             //               _singleDeviceCard(room['room_id'], device, signal)
             //           // SingleDeviceCard(
@@ -280,10 +278,13 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
             //           //   onAdd: _addToCurRoom
             //           //   )
             //           )
-            //       .toList(),
+            //       .toList():
+            //       [],
             // ),
           ],
-        ));
+        )): Container(
+          height: 0.0,
+        );
   }
 
   // Widget _singleDeviceCardBuilder(curRoomId, device, signal) {
@@ -307,17 +308,15 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
 
   Widget _singleDeviceCard(curRoomId, device, signal) {
     return Container(
-      width: ScreenUtil().setWidth(345),
-      height: ScreenUtil().setHeight(256),
+      // width: ScreenUtil().setWidth(345),
+      // height: ScreenUtil().setHeight(256),
       margin: EdgeInsets.only(bottom: 10.0),
-      child: ConstrainedBox(
-        constraints: BoxConstraints.expand(),
-        child: Stack(
+      child:
+        Stack(
           alignment: AlignmentDirectional.bottomStart,
           children: <Widget>[
             // 产品图片
             Container(
-              // height: ScreenUtil().setHeight(150),
               alignment: Alignment.topCenter,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.only(
@@ -327,7 +326,8 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
               ),
               padding: EdgeInsets.only(
                   top: ScreenUtil().setHeight(6),
-                  bottom: ScreenUtil().setHeight(130)),
+                  bottom: ScreenUtil().setHeight(100)
+                ),
               child: Image(
                 image: NetworkImage(device["app_pic_url"]
                     // "https://img10.360buyimg.com/n5/s54x54_jfs/t1/1325/27/9916/31986/5bc946c9E748626df/79850cb5c7d8a7f0.jpg"
@@ -345,13 +345,14 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
                     bottomRight: Radius.elliptical(4.0, 4.0)),
                 color: Color(0xff43486F),
               ),
-              padding: EdgeInsets.only(bottom: ScreenUtil().setHeight(6)),
+              padding: EdgeInsets.only(top: ScreenUtil().setHeight(10)),
               child: new Row(children: <Widget>[
                 new Expanded(
                   child: new Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: <Widget>[
                       Container(
+                        margin: EdgeInsets.only(top: ScreenUtil().setHeight(8)),
                         child: Text(device["device_name"],
                             style: TextStyle(color: Color(0xffffffff))),
                       ),
@@ -390,11 +391,11 @@ class RoomsInfoState extends State<RoomsInfo> with TickerProviderStateMixin {
                 ))
           ],
         ),
-      ),
     );
   }
 
   void _removeDevice(device) {
+    print(device);
     curRoom[0]['devices'].remove(device);
     if (device['room_id'] == roomId || device['room_id'] == null) {
       defaultRooms[0]['devices'].insert(0, device);
